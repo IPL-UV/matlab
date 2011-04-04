@@ -22,12 +22,24 @@ switch method
         %var = 1;
         x = 0.015;
         y = 0.015;
-        X1=[randn(n,1)*0.01+x       randn(n,1)*0.01+y];
+        X1=[randn(n,1)*0.01+x randn(n,1)*0.01+y];
         Y1=ones(n,1);
-        X2=[randn(n,1)*0.01-x       randn(n,1)*0.01-y];
+        X2=[randn(n,1)*0.01-x randn(n,1)*0.01-y];
         Y2=2*ones(n,1);
         X=[X1;X2];
         Y=[Y1;Y2];
+        
+    case 'three'
+        x = 0.015;
+        y = 0.015;
+        X1=[randn(n,1)*0.01+x randn(n,1)*0.01+y];
+        Y1=ones(n,1);
+        X2=[randn(n,1)*0.01-x randn(n,1)*0.01-y];
+        Y2=2*ones(n,1);
+        X3=[randn(n,1)*0.01+x randn(n,1)*0.01-y];
+        Y3=3*ones(n,1);
+        X=[X1;X2;X3];
+        Y=[Y1;Y2;Y3];
         
     case 'ellipsoids'
 		%mean1 = [-1;0];
@@ -36,14 +48,14 @@ switch method
 		mean2 = [1;0];
 		cov = [1 .9; .9 1];
 		
-		X1 = mvnrnd(mean1,cov,n_points);
-		X2 = mvnrnd(mean2,cov,n_points);
+		X1 = mvnrnd(mean1,cov,n);
+		X2 = mvnrnd(mean2,cov,n);
 		
 		X = [X1;X2];
-		X = X - ones(2*n_points,1)*mean(X);
-		Y = zeros(2*n_points,1); 
-        Y(1:n_points,1) = 1; 
-        Y(n_points+1:end,1) = 2;
+		X = X - ones(2*n,1)*mean(X);
+		Y = zeros(2*n,1); 
+        Y(1:n,1) = 1; 
+        Y(n+1:end,1) = 2;
         
     case 'moons'
         space=1;
