@@ -40,32 +40,50 @@ function myeb(Y,S,options)
 %
 % options struct:
 %   - x: array with x index
+%   - 
+%   - styles: cell with plot styles
 %   - legends: cell with plot legends
 
-col  = [0 0 1; 0 .5 0; 1 0 0; 0 1 1; 1 0 1; 1 .5 0; 1 .5 1; 0 0 0];
-ccol = col+.8; ccol(ccol>1) = 1;
+% Define empty options struct to avoid errors
+if ~exist('options','var')
+    options = struct;
+end
+
+if isfield(options,'colors')
+    col = options.colors;
+else
+    col  = [0 0 1; 0 .5 0; 1 0 0; 0 1 1; 1 0 1; 1 .5 0; 1 .5 1; 0 0 0];
+end
+ccol = col+.8;
+ccol(ccol>1) = 1;
 
 if nargin == 1
 
     if length(size(Y)) == 2
         % We have only Y and it is 2-D => compute mean and std and call ourselves again
-        myeb(mean(Y), std(Y))
+        myeb(mean(Y), std(Y), options)
         
     elseif length(size(Y))>2
         % 3-D data
         cla; hold on;
-        ind1=1:size(Y,2);
-        ind2=ind1(end:-1:1);
-        if size(Y,3)>8; col=jet(size(Y,3));ccol=col+.8; ccol(ccol>1)=1;end
+        ind1 = 1:size(Y,2);
+        ind2 = ind1(end:-1:1);
+        % Use jet colormap if more curves than colors defined
+        if size(Y,3) > size(col,1);
+            col = jet(size(Y,3));
+            ccol = col + .8;
+            ccol(ccol>1) = 1;
+        end
+        % Draw standard deviation fill
         for k = 1:size(Y,3)
             m = mean(Y(:,:,k));
             s = std(Y(:,:,k));
             h = fill([ind1 ind2],[m-s m(ind2)+s(ind2)],ccol(k,:));
             set(h,'edgecolor',ccol(k,:))
         end
+        % Draw curve
         for k = 1:size(Y,3)
             m = mean(Y(:,:,k));
-            %s = std(Y(:,:,k));
             plot(ind1,m,'o-','linewidth',4,'color',col(k,:))
         end
         hold off
@@ -73,22 +91,22 @@ if nargin == 1
     end
 
 elseif isstruct(S)
-    
+    % Second argument is 'options' instead of the standard deviation
     myeb(mean(Y),std(Y),S)
-    
 else
 
-    if length(size(Y))>2; error('length(size(Y)>2)');
+    if length(size(Y))>2
+        error('length(size(Y)>2)');
         
-%     elseif min(size(Y)) == 1;
-%         
-%         if size(m,1)>1; m = m';s = s';end
-%         ind1 = 1:length(m);
-%         ind2 = ind1(end:-1:1);
-%         hold on; h = fill([ind1 ind2],[m-s m(ind2)+s(ind2)],ccol(1,:));
-%         set(h,'edgecolor',ccol(1,:),'facealpha',0.5);
-%         plot(ind1,m,'linewidth',2,'color',col(1,:))
-%         hold off
+    %elseif min(size(Y)) == 1;
+    %    
+    %    if size(m,1)>1; m = m';s = s';end
+    %    ind1 = 1:length(m);
+    %    ind2 = ind1(end:-1:1);
+    %    hold on; h = fill([ind1 ind2],[m-s m(ind2)+s(ind2)],ccol(1,:));
+    %    set(h,'edgecolor',ccol(1,:),'facealpha',0.5);
+    %    plot(ind1,m,'linewidth',2,'color',col(1,:))
+    %    hold off
 
     else
         
@@ -104,38 +122,50 @@ else
         ind2 = ind1(end:-1:1);
 
         xtd = ind1;
-        if exist('options','var')
-            if isfield(options,'x')
-                xtd = options.x;
-            end
+        if isfield(options,'x')
+            xtd = options.x;
         end
         xtr = xtd(end:-1:1);
         
         cla; hold on;
-        if size(Y,2) > 8;
+        % Use jet color map if we have more curves than colors
+        if size(Y,2) > size(col,1);
             col = jet(size(Y,2));
-            ccol = col+.8;
+            ccol = col + .8;
             ccol(ccol > 1) = 1;
         end
+        % Draw standard deviation fill
         for k = 1:size(Y,2)
             mm = m(:,k)';
             ss = s(:,k)';
             h = fill([xtd xtr],[mm-ss mm(ind2)+ss(ind2)],ccol(k,:));
-            set(h,'edgecolor',ccol(k,:),'facealpha',0.5)
+            set(h,'edgecolor',ccol(k,:)) %,'facealpha',0.5)
         end
 
-        hn = zeros(1,size(Y,2));        
-        for k = 1:size(Y,2);
+        % Curve styles
+        if isfield(options,'styles')
+            styles = options.styles;
+        else
+            styles = cell(1,size(Y,2));            
+        end
+        
+        % Draw curves
+        hn = zeros(1,size(Y,2));
+        for k = 1:size(Y,2)
             mm = m(:,k)';
-            %ss = s(:,k)';
-            hn(k) = plot(xtd,mm,'o-','linewidth',4,'color',col(k,:));
-        end
-        if exist('options','var')
-            if isfield(options,'legends')
-                legend(hn, options.legends)
+            if k > length(styles) || isempty(styles{k})
+                styles{k} = 'o-';
             end
+            hn(k) = plot(xtd,mm,styles{k},'linewidth',2,'color',col(k,:));
         end
+        
+        % Legends
+        if isfield(options,'legends')
+           legend(hn, options.legends)
+        end
+        
         hold off
         
     end
+    
 end
