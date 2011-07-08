@@ -81,10 +81,21 @@ if nargin == 1
             h = fill([ind1 ind2],[m-s m(ind2)+s(ind2)],ccol(k,:));
             set(h,'edgecolor',ccol(k,:))
         end
+        
+        % Curve styles
+        if isfield(options,'styles')
+            styles = options.styles;
+        else
+            styles = cell(1,size(Y,2));            
+        end
+        
         % Draw curve
         for k = 1:size(Y,3)
-            m = mean(Y(:,:,k));
-            plot(ind1,m,'o-','linewidth',4,'color',col(k,:))
+            m = mean(Y(:,:,k));            
+            if k > length(styles) || isempty(styles{k})
+                styles{k} = '-';
+            end
+            plot(ind1,m,styles{k},'linewidth',4,'color',col(k,:))
         end
         hold off
         
@@ -154,7 +165,7 @@ else
         for k = 1:size(Y,2)
             mm = m(:,k)';
             if k > length(styles) || isempty(styles{k})
-                styles{k} = 'o-';
+                styles{k} = '-';
             end
             hn(k) = plot(xtd,mm,styles{k},'linewidth',2,'color',col(k,:));
         end
