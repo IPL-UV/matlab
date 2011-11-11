@@ -21,7 +21,7 @@ function RESULTS = assessment(Labels,PreLabels,par)
 %
 %   Gustavo Camps-Valls, 2007(c)
 %   gcamps@uv.es
-%   
+%
 %   Formulae in:
 %   Assessing the Accuracy of Remotely Sensed Data
 %   by Russell G Congalton, Kass Green. CRC Press
@@ -29,10 +29,10 @@ function RESULTS = assessment(Labels,PreLabels,par)
 
 switch lower(par)
 	case {'class'}
-	
+
 	Etiquetas = union(Labels,PreLabels);     % Class labels (usually, 1,2,3.... but can work with text labels)
 	NumClases = length(Etiquetas); % Number of classes
-	
+
 	% Compute confusion matrix
     ConfusionMatrix = zeros(NumClases);
 	for i=1:NumClases
@@ -40,12 +40,12 @@ switch lower(par)
 	                ConfusionMatrix(i,j) = length(find(PreLabels==Etiquetas(i) & Labels==Etiquetas(j)));
 	        end;
 	end;
-	          
+
 	% Compute Overall Accuracy and Cohen's kappa statistic
 	n      = sum(ConfusionMatrix(:));                     % Total number of samples
 	PA     = sum(diag(ConfusionMatrix));
 	OA     = PA/n;
-	
+
 	% Estimated Overall Cohen's Kappa (suboptimal implementation)
 	npj = sum(ConfusionMatrix,1);
 	nip = sum(ConfusionMatrix,2);
@@ -57,12 +57,12 @@ switch lower(par)
     else
     	Kappa  = (n*PA-PE)/(n^2-PE);
     end
-	
+
 	% Cohen's Kappa Variance
 	theta1 = OA;
 	theta2 = PE/n^2;
 	theta3 = (nip'+npj) * diag(ConfusionMatrix)  / n^2;
-	
+
 	suma4 = 0;
 	for i=1:NumClases
 	for j=1:NumClases
@@ -73,7 +73,7 @@ switch lower(par)
 	varKappa = ( theta1*(1-theta1)/(1-theta2)^2     +     2*(1-theta1)*(2*theta1*theta2-theta3)/(1-theta2)^3      +     (1-theta1)^2*(theta4-4*theta2^2)/(1-theta2)^4  )/n;
 	Z = Kappa/sqrt(varKappa);
 	CI = [Kappa + 1.96*sqrt(varKappa), Kappa - 1.96*sqrt(varKappa)];
-	
+
 	if NumClases==2
 	    % Wilcoxon test at 95% confidence interval
 	    [p1,h1] = signrank(Labels,PreLabels);
@@ -83,7 +83,7 @@ switch lower(par)
 	        RESULTS.WilcoxonComment	= 'The null hypothesis of both distributions come from the same median cannot be rejected at the 5% level.';
 	    end;
 	    RESULTS.WilcoxonP		= p1;
-	
+
 	    % Sign-test at 95% confidence interval
 	    [p2,h2] = signtest(Labels,PreLabels);
 	    if h2==0
@@ -92,7 +92,7 @@ switch lower(par)
 	        RESULTS.SignTestComment	= 'The null hypothesis of both distributions come from the same median cannot be rejected at the 5% level.';
 	    end;
 	    RESULTS.SignTestP		= p2;
-	
+
 	    % McNemar
 	    RESULTS.Chi2 = (abs(ConfusionMatrix(1,2)-ConfusionMatrix(2,1))-1)^2/(ConfusionMatrix(1,2)+ConfusionMatrix(2,1));
 	    if RESULTS.Chi2<10
@@ -101,27 +101,36 @@ switch lower(par)
 	        RESULTS.Chi2Comments = 'The Chi^2 is approximated by the chi-square distribution. The greater Chi^2, the lower p<0.05 and thus the difference is more statistically significant.';
 	    end
 	end
-	
+
 	% Store results:
 	RESULTS.ConfusionMatrix = ConfusionMatrix;
-	RESULTS.Kappa           = Kappa;   
-	RESULTS.OA              = 100*OA;      
+	RESULTS.Kappa           = Kappa;
+	RESULTS.OA              = 100*OA;
 	RESULTS.varKappa        = varKappa;
-	RESULTS.Z               = Z;       
+	RESULTS.Z               = Z;
 	RESULTS.CI              = CI;
-	
+
 case 'regress'
-	
+
 	RESULTS.ME   = mean(Labels-PreLabels);
 	RESULTS.RMSE = sqrt(mean((Labels-PreLabels).^2));
+    RESULTS.RELRMSE = RESULTS.RMSE/mean(PreLabels);
 	RESULTS.MAE  = mean(abs(Labels-PreLabels));
-	[rr, pp]     = corrcoef(Labels,PreLabels);
-	RESULTS.R    = rr(1,2);
-	RESULTS.RP   = pp(1,2);
+    if length(Labels) == 1
+        % Correlation coefficient does not make sense for one point
+        RESULTS.R    = 0;
+        RESULTS.R2   = 0;
+    else
+        %[rr, pp]     = corrcoef(Labels,PreLabels);
+        rr           = corrcoef(Labels,PreLabels);
+        RESULTS.R    = rr(1,2);
+        RESULTS.R2   = rr(1,2)^2;
+        %RESULTS.RP   = pp(1,2);
+    end
 
 otherwise
 	disp('Unknown learning paradigm.')
 end
- 
+
 
 
