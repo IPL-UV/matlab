@@ -150,7 +150,7 @@ else
             mm = m(:,k)';
             ss = s(:,k)';
             h = fill([xtd xtr],[mm-ss mm(ind2)+ss(ind2)],ccol(k,:));
-            set(h,'edgecolor',ccol(k,:)) %,'facealpha',0.5)
+            set(h,'edgecolor',ccol(k,:),'facealpha',0.5)
         end
 
         % Curve styles

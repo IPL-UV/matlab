@@ -13,9 +13,12 @@ if nargin < 5
     randstate = 0;
 end
 
-s = rand('state');
-rand('state',randstate);
-ct = []; cv = [];
+rs = rand('state');
+rand('state', randstate);
+
+ct = [];
+cv = [];
+
 for ii=1:length(classes)
     idt = find(YY == classes(ii));
     if vfold
@@ -31,4 +34,9 @@ for ii=1:length(classes)
         cv  = union(cv,idv);
     end
 end
-rand('state',s);
+
+% 'union' returns sets sorted, unsort them!
+ct = ct(randperm(numel(ct)));
+cv = cv(randperm(numel(cv)));
+
+rand('state', rs);
