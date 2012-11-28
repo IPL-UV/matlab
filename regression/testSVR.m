@@ -8,7 +8,7 @@ Yp = svmpredict(zeros(size(Xtest,1),1), Kt, model);
 
 if nargout > 1
     Ktrain = kernelmatrix('rbf',Xtrain',Xtrain',sigma);
-    % Add and epsilon to diagonal to ensure positive (yeah, I know Ktrain should be,
+    % Add an epsilon to diagonal to ensure positive (yeah, I know Ktrain should be,
     % but precission issues, you know ...)
     Ktrain = Ktrain + eps * eye(size(Xtrain,1));
     R = chol(Ktrain)';
