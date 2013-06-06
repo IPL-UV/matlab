@@ -22,7 +22,7 @@ function tile(figs)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if ~nargin				% If no input arguments...
-   figs = findobj('Type', 'figure');	% ...find all figures.
+   figs = findobj('Type', 'figure');	% ... find all figures.
    figs	= sort(figs);
 end
 
@@ -77,10 +77,12 @@ scrwid = scrdim(3);                 % Screen width.
 scrhgt = scrdim(4);                 % Screen height.
 
 scrwof = 0;
-%if scrwid > 1280
-%    scrwof = scrwid/2;
-%    scrwid = scrwid - scrwof;
-%end
+monitors = get(0, 'MonitorPositions');
+if size(monitors,1) > 1 % Use right monitor
+% if scrwid > 1280
+   scrwof = scrwid / 2;
+   scrwid = scrwid - scrwof;
+end
 
 figwid = (scrwid - (nh + 1) * hspc) / nh;
 fighgt = (scrhgt - (topspc + botspc) - (nv - 1) * medspc) / nv;
