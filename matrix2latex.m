@@ -48,6 +48,7 @@ colLabels = [];
 alignment = 'l';
 format = [];
 textsize = [];
+name = [];
 % if (rem(nargin,2) == 1 || nargin < 2)
 %     error('matrix2latex:error', 'Incorrect number of arguments to %s.', mfilename);
 % end
@@ -82,6 +83,8 @@ for j=1:2:(nargin-2)
             format = lower(pval);
         case 'textsize'
             textsize = pval;
+        case 'name'
+            name = pval;
         otherwise
             error('matrix2latex:error', 'Unknown parameter name: %s.', pname);
     end
@@ -110,7 +113,7 @@ if isnumeric(matrix)
     end
 end
 
-fprintf(fid, '\\begin{table}[H]\n\\begin{center}\n\\caption{Results blablabla\\label{tab:}}\n\\setlength{\\tabcolsep}{4pt}\n');
+fprintf(fid, '\\begin{table}[h!]\n\\begin{center}\n\\caption{Results %s\\label{tab:%s}}\n\\setlength{\\tabcolsep}{4pt}\n', name, name);
 if(~isempty(textsize))
     fprintf(fid, '\\begin{%s}\n', textsize);
 end
