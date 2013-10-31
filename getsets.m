@@ -25,7 +25,7 @@ for ii=1:length(classes)
         ct = union(ct,idt);
         cv = ct;
     else
-        lt  = fix(length(idt)*percent);
+        lt  = ceil(length(idt)*percent);
         idt = idt(randperm(length(idt)));
         %idv = idt(1:end-lt);  % remove cue
         idv = idt(lt+1:end); % remove head
