@@ -1,4 +1,4 @@
-% function K = kernelmatrix(ker,X,X2,sigma,b,d)
+% function K = kernelmatrix(ker,X1,X2,sigma,b,d)
 %
 % Inputs:
 %	ker:    'lin','poly','rbf','sam'
@@ -25,6 +25,10 @@
 function K = kernelmatrix(ker,X1,X2,varargin) % ,sigma,b,d)
 
 % Check input arguments
+if ~exist('X2','var')
+    X2 = X1;
+end
+
 switch ker
     case 'poly'
         if size(varargin,2) < 2,
@@ -55,21 +59,13 @@ end
 % Compute requested kernel
 switch ker
     case {'lin','sam'}
-        if exist('X2','var')
-            K = X1' * X2;
-        else
-            K = X1' * X1;
-        end
+        K = X1' * X2;
         if strcmp(ker,'sam')
             K = exp(-acos(K).^2/(2*sigma^2));
         end
         
     case {'poly','tanh'}
-        if exist('X2','var')
-            K = (X1' * X2 + bias);
-        else
-            K = (X1' * X1 + bias);
-        end
+        K = (X1' * X2 + bias);
         if strcmp(ker, 'poly')
             K = K .^ degree;
         else
@@ -77,28 +73,15 @@ switch ker
         end
         
     case 'rq'
-        if exist('X2','var')
-            K = norm2mat(X1,X2);
-        else
-            K = norm2mat(X1);
-        end
-        
+        K = norm2mat(X1,X2);
         K = 1 - K./(K + bias);
         
     case 'mq'
-        if exist('X2','var')
-            K = norm2mat(X1,X2);
-        else
-            K = norm2mat(X1);
-        end
+        K = norm2mat(X1,X2);
         K = sqrt( K + bias^2 );
         
     case {'rbf','exp','exponential','laplace'}
-        if exist('X2','var')
-            K = norm2mat(X1,X2);
-        else
-            K = norm2mat(X1);
-        end
+        K = norm2mat(X1,X2);
         switch ker
             case 'rbf'
                 K = exp(-K/(2*sigma^2));
@@ -109,29 +92,18 @@ switch ker
         end
         
     case 'power'
-        if exist('X2','var')
-            K = norm2mat(X1,X2);
-        else
-            K = norm2mat(X1);
-        end
+        K = norm2mat(X1,X2);
         K = K .^ (degree/2);
         
     case 'anova'
         % For each dimension compute a RBF kernel and sum them all
         K = 0;
         d = size(X1,1);
-        if ~exist('X2','var')
-            X2 = X1;
-        end
         for k = 1:d
             K = K + d * kernelmatrix('rbf', X1(k,:), X2(k,:), sigma);
         end
         
     case {'chi-square','chi'}
-        if ~exist('X2','var')
-            X2 = X1;
-        end
-        
         d = size(X1,1);
         n1 = size(X1,2);
         n2 = size(X2,2);
@@ -159,20 +131,30 @@ switch ker
     otherwise
         error(['Unsupported kernel ' ker])
 end
-end
 
 function D = norm2mat(X1,X2)
-n1sq = sum(X1.^2,1);
-n1 = size(X1,2);
-
-if exist('X2','var');
-    n2sq = sum(X2.^2,1);
-    n2 = size(X2,2);
-    D = n1sq'*ones(1,n2) + ones(n1,1)*n2sq - 2*(X1'*X2);
-    % In MATLAB multipliying by 'ones' is faster than repmat!
-    % D = repmat(n1sq',1,n2) + repmat(n2sq,n1,1) - 2*(X'*X2);
-else
-    D = 2 * (ones(n1,1)*n1sq - X1'*X1);
-    % D = 2 * (repmat(n1s1,n1,1) - X'*X);
+    D = - 2 * (X1' * X2);
+    D = bsxfun(@plus, D, sum(X1.^2,1)');
+    D = bsxfun(@plus, D, sum(X2.^2,1));
 end
+
+% function D = norm2mat(X1,X2)
+%     n1 = size(X1,2);
+%     n2 = size(X2,2);
+%     n1sq = sum(X1.^2,1);
+%     n2sq = sum(X2.^2,1);
+%     D = n1sq'*ones(1,n2) + ones(n1,1)*n2sq - 2*(X1'*X2);
+%     
+%     %if exist('X2','var');
+%     %    n2sq = sum(X2.^2,1);
+%     %    n2 = size(X2,2);
+%     %    D = n1sq'*ones(1,n2) + ones(n1,1)*n2sq - 2*(X1'*X2);
+%     %    % In MATLAB multipliying by 'ones' is faster than repmat!
+%     %    % D = repmat(n1sq',1,n2) + repmat(n2sq,n1,1) - 2*(X'*X2);
+%     %else
+%     %    D = 2 * (ones(n1,1)*n1sq - X1'*X1);
+%     %    % D = 2 * (repmat(n1s1,n1,1) - X'*X);
+%     %end
+% end
+
 end
