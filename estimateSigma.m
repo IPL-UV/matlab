@@ -1,4 +1,3 @@
-%
 % ESTIMATESIGMA This function estimates reasonable sigma values for the RBF kernel using different methods.
 %
 %    sigma = estimateSigma(X,Y,method)
@@ -10,40 +9,50 @@
 %
 %         ---unsupervised approaches, call: estimateSigma(X,[],method)
 %
-%          1:  'mean' ................... Average distance between all samples
+%          1:  'mean' (default)  ........ Average distance between all samples
 %          2:  'median' ................. Median of the distances between all samples
-%          3:  'quantiles' .............. 10 values to try in the range of 0.05-0.95
+%          3:  'mode' ................... Mode of the distances between all samples
+%          4:  'quantiles' .............. 10 values to try in the range of 0.05-0.95
 %                                         percentiles of the distances between all samples
-%          4:  'histo' .................. Sigma proportional to the dimensionality and feature variance
-%          5:  'range' .................. 10 values to try in the range of 0.2-0.5 of the feature range
-%          6:  'silverman' .............. Median of the Silverman's rule per feature
-%          7:  'scott' .................. Median of the Scott's rule per feature
-%          8:  'maxlike' ................ Maximum likelihood estimate (with standard cross-validation)
-%          9:  'bayes' .................. Maximum Bayes estimate (with standard cross-validation)
-%         10:  'entropy' ................ Maximum Entropy estimate (with standard cross-validation)
-%         11:  'ksdens' ................. Average estimate of univariate/marginal kernel density estimates
-%         12:  'kde' .................... KDE using Gaussian kernel
+%          5:  'histo' .................. Sigma proportional to the dimensionality and feature variance
+%          6:  'range' .................. 10 values to try in the range of 0.2-0.5 of the feature range
+%          7:  'silverman' .............. Median of the Silverman's rule per feature
+%          8:  'scott' .................. Median of the Scott's rule per feature
+%          9:  'maxlike' ................ Maximum likelihood estimate (with standard cross-validation)
+%         10:  'bayes' .................. Maximum Bayes estimate (with standard cross-validation)
+%         11:  'entropy' ................ Maximum Entropy estimate (with standard cross-validation)
+%         12:  'ksdens' ................. Average estimate of univariate/marginal kernel density estimates
+%         13:  'kde' .................... KDE using Gaussian kernel
 %                                       (http://www.ics.uci.edu/~ihler/code/kde.html is needed)
 %
 %         ---supervised approaches, call: estimateSigma(X,Y,method)
 %
-%         13:  'alignment' .............. Kernel alignment (i.e. HSIC maximization between data and labels)
-%         14:  'krr' .................... Kernel ridge regression
+%         14:  'alignment' .............. Kernel alignment (i.e. HSIC maximization between data and labels)
+%         15:  'krr' .................... Kernel ridge regression
 %
 %    OUTPUTS:
 %       sigma  : the estimated sigmas in a Matlab structure
 %       cost   : the estimated CPU time for computing the corresponding sigma
 %
-% Gustavo Camps-Valls, 2013
-% gustavo.camps@uv.es, http://isp.uv.es
+% Gustau Camps-Valls, 2013
+%   gustau.camps@uv.dot.es, http://isp.uv.es
 %
+% JoRdI, 2016
+%   jordi@uv.dot.es
 
 function [sigma cost] = estimateSigma(X,Y,method)
+
+if ~exist('Y','var')
+    Y = [];
+end
+if ~exist('method','var')
+    method = 'mean';
+end
 
 % Subsampling
 [n d] = size(X);
 idx = randperm(n);
-if n>1000
+if n > 1000
     n = 1000;
     X = X(idx(1:n),:);
     if ~isempty(Y)
@@ -56,53 +65,60 @@ ss = 20;
 SIGMAS = logspace(-3,3,ss);
 
 if sum(strcmpi(method,'mean'))
-    t=cputime;
+    tic
     D = pdist(X);
-    sigma.mean = mean(D(D>0));
-    cost.mean = cputime-t;
+    sigma = mean(D(D>0));
+    cost = toc;
 end
 
 if sum(strcmpi(method,'median'))
-    t=cputime;
+    tic
     D = pdist(X);
-    sigma.median = median(D(D>0));
-    cost.median = cputime-t;
+    sigma = median(D(D>0));
+    cost = toc;
+end
+
+if sum(strcmpi(method,'mode'))
+    tic
+    D = pdist(X);
+    sigma = mode(D(D>0));
+    cost = toc;
 end
 
 if sum(strcmpi(method,'quantiles'))
-    t=cputime;
+    tic
     D = pdist(X);
-    sigma.quantiles =  quantile(D(D>0),linspace(0.05,0.95,10));
-    cost.quantiles = cputime-t;
+    sigma =  quantile(D(D>0),linspace(0.05,0.95,10));
+    cost = toc;
 end
 
 if sum(strcmpi(method,'histo'))
-    t=cputime;
-    sigma.sampling = sqrt(d)*median(var(X));
-    cost.sampling = cputime-t;
+    tic
+    sigma = sqrt(d)*median(var(X));
+    cost = toc;
 end
 
 if sum(strcmpi(method,'range'))
-    t=cputime;
+    tic
     mm = minmax(X');
-    sigma.range = median(mm(:,2)-mm(:,1))*linspace(0.2,0.5,10);
-    cost.range = cputime-t;
+    sigma = median(mm(:,2)-mm(:,1))*linspace(0.2,0.5,10);
+    cost = toc;
 end
 
 if sum(strcmpi(method,'silverman'))
-    t=cputime;
-    sigma.silverman = median( ((4/(d+2))^(1/(d+4))) * n^(-1/(d+4)).*std(X,1) );
-    cost.silverman = cputime-t;
+    tic
+    sigma = median( ((4/(d+2))^(1/(d+4))) * n^(-1/(d+4)).*std(X,1) );
+    cost = toc;
 end
 
 if sum(strcmpi(method,'scott'))
-    t=cputime;
-    sigma.scott = median( diag( n^(-1/(d+4))*cov(X).^(1/2) ));
-    cost.scott = cputime-t;
+    tic
+    sigma = median( diag( n^(-1/(d+4))*cov(X).^(1/2) ));
+    cost = toc;
 end
 
 if sum(strcmpi(method,'maxlike'))
-    t=cputime;
+    tic
     mle = zeros(1,ss);
     r = randperm(n);
     ntrain = round(n*0.9);
@@ -119,12 +135,12 @@ if sum(strcmpi(method,'maxlike'))
         mle(i) = sum(log(sum(K)./size(K,2)));
     end
     [~, idx] = max(mle);
-    sigma.maxlike = SIGMAS(idx);
-    cost.maxlike = cputime-t;
+    sigma = SIGMAS(idx);
+    cost = toc;
 end
 
 if sum(strcmpi(method,'bayes'))
-    t=cputime;
+    tic
     bayes = zeros(1,ss);
     r = randperm(n);
     ntrain = round(n*0.9);
@@ -141,12 +157,12 @@ if sum(strcmpi(method,'bayes'))
         bayes(i) = sum(log(sum(K)./size(K,2)))+log(1./SIGMAS(i));
     end
     [~, idx] = max(bayes);
-    sigma.bayes = SIGMAS(idx);
-    cost.bayes = cputime-t;
+    sigma = SIGMAS(idx);
+    cost = toc;
 end
 
 if sum(strcmpi(method,'entropy'))
-    t=cputime;
+    tic
     entropy = zeros(1,ss);
     r = randperm(n);
     ntrain = round(n*0.9);
@@ -163,53 +179,53 @@ if sum(strcmpi(method,'entropy'))
         entropy(i) = sum(K(:));
     end
     [~, idx] = max(entropy);
-    sigma.entropy = SIGMAS(idx);
-    cost.entropy = cputime-t;
+    sigma = SIGMAS(idx);
+    cost = toc;
 end
 
 if sum(strcmpi(method,'ksdens'))
-    t=cputime;
+    tic
     estim = zeros(1,d);
     for i=1:size(X,2)
         [~,~,estim(i)]= ksdensity(X(:,i));
     end
-    sigma.ksdensity = mean(estim);
-    cost.ksdensity = cputime-t;
+    sigma = mean(estim);
+    cost = toc;
 end
 
 if sum(strcmpi(method,'kde'))
-    t=cputime;
+    tic
     px = kde(X','lcv');
     s  = getBW(px);
-    sigma.kde = unique(s);
-    cost.kde = cputime-t;
+    sigma = unique(s);
+    cost = toc;
 end
 
-if sum(strcmpi(method,'alignment')) && ~isempty(Y)
-    t=cputime;   
+if sum(strcmpi(method, 'alignment')) && ~isempty(Y)
+    tic   
     H = eye(n) - 1/n*ones(n,n);
-    Ky = Y*Y';
+    Ky = Y * Y';
     ka = zeros(1,ss);
     SIGMAS = logspace(-3,3,ss);
-    for i=1:ss
+    for i = 1:ss
         s = SIGMAS(i);
         Kx = kernelmatrix('rbf',X',X',s);
-        ka(i) = trace(H*Kx*H*Ky);
+        ka(i) = trace(H * Kx * H * Ky);
     end
     [~, idx] = max(ka);
-    sigma.alignment = SIGMAS(idx);
-    cost.alignment = cputime-t;  
+    sigma = SIGMAS(idx);
+    cost = toc;  
 end
 
-if sum(strcmpi(method,'krr')) && ~isempty(Y)
-    t=cputime;   
+if sum(strcmpi(method, 'krr')) && ~isempty(Y)
+    tic   
     r = randperm(n);
     ntrain = round(n*0.9);
-    X1 = X(r(1:ntrain),:);    X2 = X(r(ntrain+1:end),:);
-    Y1 = Y(r(1:ntrain),:);    Y2 = Y(r(ntrain+1:end),:);
+    X1 = X(r(1:ntrain),:);  X2 = X(r(ntrain+1:end),:);
+    Y1 = Y(r(1:ntrain),:);  Y2 = Y(r(ntrain+1:end),:);
     res = zeros(ss*10,3);
-    k=0;
-    for i=1:ss
+    k = 0;
+    for i = 1:ss
         s = SIGMAS(i);
         K = kernelmatrix('rbf',X1',X1',s);
         for g=logspace(-4,4,10)
@@ -221,8 +237,8 @@ if sum(strcmpi(method,'krr')) && ~isempty(Y)
         end
     end
     [~, idx] = min(res(:,3));
-    sigma.krr = res(idx,1);
-    cost.krr = cputime-t;  
+    sigma = res(idx,1);
+    cost = toc;  
 end
 
-
+fprintf('method: %s, sigma: %f, cpmp. time: %f\n', method, sigma, cost)
